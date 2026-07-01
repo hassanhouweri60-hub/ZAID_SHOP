@@ -1,342 +1,295 @@
 import { useState, useEffect } from 'react';
+import { Routes, Route, useNavigate } from 'react-router-dom';
+import { supabase } from './supabase';
+import './index.css';
+
+// Importation des pages
 import Login from './Login';
 import Admin from './Admin';
-import './index.css';
-import { supabase } from './supabase';
+import Avis from './Avis';
+import Commandes from './Commandes';
+import Contact from './Contact';
+import Payement from './Payement';
+
+// Importation des composants isolés
+import Navbar from './components/Navbar';
+import Sidebar from './components/Sidebar';
+import Hero from './components/Hero';
+import Footer from './components/Footer';
+import CartModal from './components/CartModal';
+import ProductCard from './components/ProductCard'; // 👈 استيراد كرت المنتج الجديد
+
+// --- LE DICTIONNAIRE DE TRADUCTION ---
+const traductions = {
+  fr: {
+    accueil: "Accueil", boutique: "Boutique", contact: "Contact", panier: "Panier", recherche: "Rechercher un produit...",
+    enStock: "En stock", rupture: "Rupture de stock", ajouter: "Ajouter au panier", bonjour: "Bonjour", admin: "Admin",
+    seConnecter: "Se connecter", seDeconnecter: "Se déconnecter", titreHero: "Bienvenue chez l'Élite",
+    descHero: "Découvrez notre sélection exclusive de produits technologiques, de lecture et d'accessoires premium.",
+    nosProduits: "Nos Produits Tendances", horsStock: "Hors Stock", aucunProduit: "Aucun produit ne correspond à votre recherche.",
+    votrePanier: "Votre Panier", panierVide: "Votre panier est vide.", total: "Total", commander: "Passer la commande",
+    droits: "Tous droits réservés.", ajouteNotif: "a été ajouté au panier !", aBientot: "À bientôt !", avis: "Avis Clients",
+    infoPersonnel: "Infos Personnelles", mesCommandes: "Mes Commandes", erreurConnexion: "Veuillez vous connecter pour commander.",
+    commandeSucces: "Commande passée avec succès !"
+  },
+  en: {
+    accueil: "Home", boutique: "Shop", contact: "Contact", panier: "Cart", recherche: "Search a product...",
+    enStock: "In stock", rupture: "Out of stock", ajouter: "Add to cart", bonjour: "Hello", admin: "Admin",
+    seConnecter: "Login", seDeconnecter: "Logout", titreHero: "Welcome to the Elite",
+    descHero: "Discover our exclusive selection of technological products, reading materials, and premium accessories.",
+    nosProduits: "Trending Products", horsStock: "Out of Stock", aucunProduit: "No products match your search.",
+    votrePanier: "Your Cart", panierVide: "Your cart is empty.", total: "Total", commander: "Checkout",
+    droits: "All rights reserved.", ajouteNotif: "has been added to the cart!", aBientot: "See you soon!", avis: "Customer Reviews",
+    infoPersonnel: "Personal Info", mesCommandes: "My Orders", erreurConnexion: "Please log in to checkout.",
+    commandeSucces: "Order placed successfully!"
+  }
+};
 
 function App() {
-// --- VARIABLES D'ÉTAT ---
-  const [produits, setProduits] = useState([]); // 👈 المنتجات صارت تجي من قاعدة البيانات
+  const navigate = useNavigate();
 
   // --- VARIABLES D'ÉTAT ---
-  const [pageCourante, setPageCourante] = useState('accueil'); 
-  const [panier, setPanier] = useState([]);
+  const [produits, setProduits] = useState([]);
+  const [panier, setPanier] = useState(() => {
+    const panierSauvegarde = localStorage.getItem('zaid_shop_panier');
+    return panierSauvegarde ? JSON.parse(panierSauvegarde) : [];
+  });
+  
+  useEffect(() => localStorage.setItem('zaid_shop_panier', JSON.stringify(panier)), [panier]);
+  
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [recherche, setRecherche] = useState("");
   const [theme, setTheme] = useState("light");
   const [notification, setNotification] = useState("");
   const [showSuggestions, setShowSuggestions] = useState(false);
-  
-  // 👉 LA VARIABLE MANQUANTE EST LÀ :
+  const [langue, setLangue] = useState('fr'); 
+  const [isMenuOpen, setIsMenuOpen] = useState(false); 
   const [utilisateur, setUtilisateur] = useState(null);
+  const [isAdmin, setIsAdmin] = useState(false); 
 
-  // --- ESPION DE CONNEXION SUPABASE (Le cerveau manquant !) ---
+  const setPageCourante = (page) => {
+    if (page === 'accueil') navigate('/');
+    else navigate(`/${page}`);
+  };
+
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setUtilisateur(session?.user ?? null);
-    });
+    const verifierAdmin = async (user) => {
+      setUtilisateur(user);
+      if (user) {
+        const { data } = await supabase.from('admins').select('email').eq('email', user.email).single();
+        setIsAdmin(!!data); 
+      } else {
+        setIsAdmin(false);
+      }
+    };
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      setUtilisateur(session?.user ?? null);
-    });
-
+    supabase.auth.getSession().then(({ data: { session } }) => verifierAdmin(session?.user ?? null));
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => verifierAdmin(session?.user ?? null));
+    
     return () => subscription.unsubscribe();
   }, []);
 
-  // --- جلب المنتجات من Supabase ---
   useEffect(() => {
     const fetchProduits = async () => {
       const { data, error } = await supabase.from('products').select('*');
-      if (error) {
-        console.error("Erreur fetch produits:", error);
-      } else {
-        setProduits(data);
-      }
+      if (!error) setProduits(data);
     };
     fetchProduits();
   }, []);
 
   const getNomClient = () => {
     if (!utilisateur) return "";
-    if (utilisateur.user_metadata?.full_name) return utilisateur.user_metadata.full_name;
-    if (utilisateur.user_metadata?.prenom) return utilisateur.user_metadata.prenom;
-    return utilisateur.email.split('@')[0];
+    return utilisateur.user_metadata?.full_name || utilisateur.user_metadata?.prenom || utilisateur.email.split('@')[0];
   };
 
   const seDeconnecter = async () => {
     await supabase.auth.signOut();
-    setNotification("👋 À bientôt !");
+    setIsMenuOpen(false);
+    setNotification(`👋 ${traductions[langue].aBientot}`);
   };
 
-  // --- LOGIQUE DU PANIER ---
   const ajouterAuPanier = (produit) => {
     const produitExistant = panier.find(item => item.id === produit.id);
+    if (produitExistant && produitExistant.quantite >= produit.stock) {
+      setNotification(langue === 'fr' ? `⚠️ Stock maximum atteint pour ${produit.nom}` : `⚠️ Maximum stock reached for ${produit.nom}`);
+      return;
+    }
     if (produitExistant) {
-      setPanier(panier.map(item => 
-        item.id === produit.id ? { ...item, quantite: item.quantite + 1 } : item
-      ));
+      setPanier(panier.map(item => item.id === produit.id ? { ...item, quantite: item.quantite + 1 } : item));
     } else {
       setPanier([...panier, { ...produit, quantite: 1 }]);
     }
-    setNotification(`🛒 ${produit.nom} a été ajouté au panier !`);
+    setNotification(`🛒 ${produit.nom} ${traductions[langue].ajouteNotif}`);
   };
 
   const diminuerQuantite = (id) => {
     const produitExistant = panier.find(item => item.id === id);
-    if (produitExistant.quantite === 1) {
-      supprimerDuPanier(id);
-    } else {
-      setPanier(panier.map(item => 
-        item.id === id ? { ...item, quantite: item.quantite - 1 } : item
-      ));
+    if (produitExistant.quantite === 1) supprimerDuPanier(id);
+    else setPanier(panier.map(item => item.id === id ? { ...item, quantite: item.quantite - 1 } : item));
+  };
+
+  const supprimerDuPanier = (id) => setPanier(panier.filter(item => item.id !== id));
+  const viderPanier = () => setPanier([]);
+
+  const passerCommande = async () => {
+    if (panier.length === 0) return;
+    if (!utilisateur) {
+      setNotification(`⚠️ ${traductions[langue].erreurConnexion}`);
+      setIsCartOpen(false);
+      navigate('/login'); 
+      return; 
     }
-  };
 
-  const supprimerDuPanier = (id) => {
-    setPanier(panier.filter(item => item.id !== id));
-  };
+    setNotification(langue === 'fr' ? "⏳ Traitement en cours..." : "⏳ Processing...");
+    
+    let toutEstEnStock = true;
+    let produitEnRupture = "";
 
-  const viderPanier = () => {
-    setPanier([]);
+    for (const item of panier) {
+      const { data: success, error: rpcError } = await supabase.rpc('diminuer_stock', {
+        p_id: item.id,
+        p_quantite: item.quantite
+      });
+      
+      if (rpcError || !success) {
+        toutEstEnStock = false;
+        produitEnRupture = item.nom;
+        break; 
+      }
+    }
+
+    if (!toutEstEnStock) {
+      setNotification(langue === 'fr' 
+        ? `❌ Désolé, le produit "${produitEnRupture}" n'est plus en stock suffisant !` 
+        : `❌ Sorry, "${produitEnRupture}" is out of stock!`);
+      return; 
+    }
+
+    const { error } = await supabase.from('commandes').insert([{ 
+      client_nom: getNomClient(), 
+      client_email: utilisateur.email, 
+      prix_total: parseFloat(total), 
+      contenu_panier: panier 
+    }]);
+
+    if (!error) {
+      viderPanier(); 
+      setIsCartOpen(false);
+      navigate('/succes');
+    } else {
+      console.error("Erreur lors de la création de la commande :", error);
+      setNotification(langue === 'fr' ? "❌ Erreur de serveur." : "❌ Server error.");
+    }
   };
 
   const total = panier.reduce((somme, item) => somme + (item.prix * item.quantite), 0).toFixed(2);
   const nombreArticles = panier.reduce((total, item) => total + item.quantite, 0);
+  const produitsFiltres = produits.filter(p => p.nom.toLowerCase().includes(recherche.toLowerCase()));
+  const cliqueSurSuggestion = (nomProduit) => { setRecherche(nomProduit); setShowSuggestions(false); };
+  
+  const toggleTheme = () => setTheme(theme === "light" ? "dark" : "light");
 
-  // --- RECHERCHE ET THÈME ---
-  const produitsFiltres = produits.filter(produit => 
-    produit.nom.toLowerCase().includes(recherche.toLowerCase())
-  );
-
-  const cliqueSurSuggestion = (nomProduit) => {
-    setRecherche(nomProduit);
-    setShowSuggestions(false);
-  };
-
-  const toggleTheme = () => {
-    setTheme(theme === "light" ? "dark" : "light");
-  };
-
-  useEffect(() => {
-    document.body.className = theme;
-  }, [theme]);
-
+  useEffect(() => { document.body.className = theme; }, [theme]);
   useEffect(() => {
     if (notification) {
-      const timer = setTimeout(() => {
-        setNotification("");
-      }, 3000);
+      const timer = setTimeout(() => setNotification(""), 3000);
       return () => clearTimeout(timer);
     }
   }, [notification]);
 
-  // --------------------------------------------------------
-  // LE GRAND AIGUILLAGE DES PAGES 🚂
-  // --------------------------------------------------------
-  
-  if (pageCourante === 'login') {
-    return <Login setPageCourante={setPageCourante} />;
-  }
-  if (pageCourante === 'admin') {
-    return <Admin setPageCourante={setPageCourante} />;
-  }
-
-  // SINON, ON AFFICHE TOUTE LA BOUTIQUE CLASSIQUE 👇
   return (
-    <div>
-      <nav className="navbar">
-        <div className="logo">
-          <i className="fa-solid fa-store"></i> ZAID <span>SHOP</span>
-        </div>
-        <ul className="nav-links">
-          <li><a href="#accueil">Accueil</a></li>
-          <li><a href="#boutique">Boutique</a></li>
-          <li><a href="/contact.html">Contact</a></li>
-          {/* 🕵️‍♂️ LE BOUTON SECRET ADMIN (Visible QUE par toi) */}
-          {utilisateur && utilisateur.email === 'hassanhouweri60@gmail.com' && (
-            <li>
-              <a 
-                href="#" 
-                onClick={(e) => { e.preventDefault(); setPageCourante('admin'); }}
-                style={{ color: '#10b981', fontWeight: 'bold' }}
-              >
-                <i className="fa-solid fa-lock"></i> Admin
-              </a>
-            </li>
-          )}
-          
-          {/* --- AFFICHAGE CONDITIONNEL : UTILISATEUR CONNECTÉ OU NON --- */}
-          {utilisateur ? (
-            <li style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
-              <span style={{ color: 'var(--primary-color)', fontWeight: 'bold' }}>
-                <i className="fa-solid fa-face-smile"></i> Bonjour, {getNomClient()}
-              </span>
-              <button 
-                onClick={seDeconnecter}
-                style={{
-                  background: 'none', border: 'none', color: '#ef4444', 
-                  cursor: 'pointer', fontSize: '1rem'
-                }}
-                title="Se déconnecter"
-              >
-                <i className="fa-solid fa-right-from-bracket"></i>
-              </button>
-            </li>
-          ) : (
-            <li>
-              <a 
-                href="#" 
-                onClick={(e) => { e.preventDefault(); setPageCourante('login'); }}
-                style={{ color: 'var(--accent-color)', fontWeight: 'bold' }}
-              >
-                <i className="fa-solid fa-user"></i> Se connecter
-              </a>
-            </li>
-          )}
-        </ul>
-        
-        <div className="theme-toggle" onClick={toggleTheme} style={{ cursor: 'pointer', marginRight: '20px', fontSize: '1.2rem' }}>
-          <i className={theme === "light" ? "fa-solid fa-moon" : "fa-solid fa-sun"}></i>
-        </div>
-        
-        <div className="cart-icon" onClick={() => setIsCartOpen(true)} style={{ cursor: 'pointer' }}>
-          <i className="fa-solid fa-cart-shopping"></i>
-          <span id="cart-count">{nombreArticles}</span>
-        </div>
-      </nav>
+    <div className="font-sans antialiased text-gray-900 dark:text-gray-100 bg-gray-50 dark:bg-gray-900 min-h-screen transition-colors duration-300">
+      {notification && <div className="fixed bottom-5 left-1/2 -translate-x-1/2 bg-emerald-500 text-white px-6 py-3 rounded-full shadow-2xl font-bold z-[9999] flex items-center gap-2 animate-bounce">{notification}</div>}
 
-      <header id="accueil" className="hero">
-        <div className="hero-content">
-          <h1>Bienvenue chez l'Élite</h1>
-          <p>Découvrez notre sélection exclusive de produits technologiques, de lecture et d'accessoires premium.</p>
-        </div>
-      </header>
-
-      <main id="boutique" className="shop-section">
-        <div className="section-title">
-          <h2>Nos Produits Tendances</h2>
-          <div className="underline"></div>
-        </div>
+      <Routes>
+        <Route path="/login" element={<Login setPageCourante={setPageCourante} />} />
+        <Route path="/admin" element={<Admin setPageCourante={setPageCourante} />} />
+        <Route path="/avis" element={<Avis setPageCourante={setPageCourante} utilisateur={utilisateur} langue={langue} />} />
+        <Route path="/commandes" element={<Commandes setPageCourante={setPageCourante} utilisateur={utilisateur} langue={langue} />} />
+        <Route path="/contact" element={<Contact setPageCourante={setPageCourante} langue={langue} />} />
+        <Route path="/succes" element={<Payement setPageCourante={setPageCourante} theme={theme} traductions={traductions} langue={langue} />} />
         
-        <div className="search-container">
-          <div className="search-box">
-            <input 
-              type="text" 
-              placeholder="Rechercher un produit ..." 
-              autoComplete="off"
-              value={recherche}
-              onChange={(e) => {
-                setRecherche(e.target.value);
-                setShowSuggestions(true);
-              }}
-              onFocus={() => setShowSuggestions(true)}
-              onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
+        <Route path="/" element={
+          <div className="flex flex-col min-h-screen">
+            
+            <Navbar 
+              setIsMenuOpen={setIsMenuOpen} langue={langue} setLangue={setLangue} 
+              utilisateur={utilisateur} getNomClient={getNomClient} seDeconnecter={seDeconnecter} 
+              theme={theme} toggleTheme={toggleTheme} setIsCartOpen={setIsCartOpen} 
+              nombreArticles={nombreArticles} traductions={traductions} isAdmin={isAdmin}
             />
-            <i className="fa-solid fa-magnifying-glass"></i>
-          </div>
 
-          {showSuggestions && recherche.length > 0 && produitsFiltres.length > 0 && (
-            <div className="suggestions-box" style={{ display: 'block' }}>
-              {produitsFiltres.map((produit) => (
-                <div 
-                  key={produit.id} 
-                  className="suggestion-item"
-                  onClick={() => cliqueSurSuggestion(produit.nom)}
-                >
-                  <i className="fa-solid fa-magnifying-glass" style={{ fontSize: '0.8rem', marginRight: '10px', color: 'var(--text-light)' }}></i>
-                  {produit.nom}
+            {isMenuOpen && (
+              <Sidebar 
+                setIsMenuOpen={setIsMenuOpen} langue={langue} setLangue={setLangue} 
+                utilisateur={utilisateur} getNomClient={getNomClient} seDeconnecter={seDeconnecter} 
+                traductions={traductions} isAdmin={isAdmin}
+              />
+            )}
+
+            <Hero langue={langue} traductions={traductions} />
+
+            <main id="boutique" className="py-16 px-4 max-w-7xl mx-auto flex-grow w-full">
+              <div className="text-center mb-12">
+                <h2 className="text-3xl md:text-4xl font-extrabold text-[#1e3a8a] dark:text-white mb-4">{traductions[langue].nosProduits}</h2>
+                <div className="h-1 w-20 bg-[#f59e0b] mx-auto rounded-full"></div>
+              </div>
+              
+              <div className="max-w-2xl mx-auto relative mb-12 z-20">
+                <div className="relative flex items-center bg-white dark:bg-gray-800 rounded-full shadow-lg border border-gray-100 dark:border-gray-700 h-16 overflow-hidden">
+                  <div className="pl-6 text-gray-400 text-xl"><i className="fa-solid fa-magnifying-glass"></i></div>
+                  <input 
+                    type="text" placeholder={traductions[langue].recherche} autoComplete="off" 
+                    value={recherche} onChange={(e) => { setRecherche(e.target.value); setShowSuggestions(true); }} 
+                    onFocus={() => setShowSuggestions(true)} onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
+                    className="w-full h-full bg-transparent border-none px-4 text-gray-900 dark:text-white outline-none font-medium text-lg placeholder-gray-400"
+                  />
                 </div>
-              ))}
-            </div>
-          )}
-        </div>
-        
-       <div className="product-grid">
-          {produitsFiltres.map((produit) => (
-            <div key={produit.id} className="product-card">
-              <img src={produit.image} alt={produit.nom} className="product-img" />
-              <div className="product-info">
-                <h3>{produit.nom}</h3>
-                <p className="price">{produit.prix} €</p>
-                <p style={{ fontSize: '0.8rem', color: produit.stock > 0 ? 'green' : 'red' }}>
-                  {produit.stock > 0 ? (
-                    <>
-                      En stock 
-                      {/* 🕵️‍♂️ Si c'est l'admin connecté, on affiche le chiffre exact à côté */}
-                      {utilisateur && utilisateur.email === 'hassanhouweri60@gmail.com' && (
-                        <span style={{ fontWeight: 'bold', marginLeft: '5px' }}>({produit.stock})</span>
-                      )}
-                    </>
-                  ) : (
-                    "Rupture de stock"
-                  )}
-                </p>
-                
-                {/* 👈 الشرط الذكي: إذا كان الستوك صفر، نعطل الزر ونغير شكله */}
-                {produit.stock > 0 ? (
-                  <button className="add-to-cart" onClick={() => ajouterAuPanier(produit)}>
-                    Ajouter au panier <i className="fa-solid fa-cart-plus"></i>
-                  </button>
-                ) : (
-                  <button className="add-to-cart" style={{ backgroundColor: '#ccc', cursor: 'not-allowed' }} disabled>
-                    Hors Stock ❌
-                  </button>
+                {showSuggestions && recherche.length > 0 && produitsFiltres.length > 0 && (
+                  <div className="absolute top-20 left-0 w-full bg-white dark:bg-gray-800 rounded-2xl shadow-2xl border border-gray-100 dark:border-gray-700 overflow-hidden max-h-60 overflow-y-auto">
+                    {produitsFiltres.map((produit) => (
+                      <div key={produit.id} className="px-6 py-4 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 border-b border-gray-50 dark:border-gray-700 flex items-center gap-3 transition-colors text-gray-800 dark:text-gray-200 font-medium" onClick={() => cliqueSurSuggestion(produit.nom)}>
+                        <i className="fa-solid fa-magnifying-glass text-gray-400 text-sm"></i> {produit.nom}
+                      </div>
+                    ))}
+                  </div>
                 )}
               </div>
-            </div>
-          ))}
-          {produitsFiltres.length === 0 && (
-            <p>Aucun produit ne correspond à votre recherche.</p>
-          )}
-        </div>
-      </main>
-
-      {/* PANIER MODAL */}
-      { isCartOpen && (
-        <div className="cart-overlay" onClick={() => setIsCartOpen(false)}>
-          <div className="cart-modal" onClick={(e) => e.stopPropagation()}>
-            <div className="cart-header">
-              <h2>Votre Panier</h2>
-              <button id="close-cart" onClick={() => setIsCartOpen(false)}>
-                <i className="fa-solid fa-xmark"></i>
-              </button>
-            </div>
-            
-            <div className="cart-items">
-              {panier.length === 0 ? (
-                <p style={{ textAlign: 'center', marginTop: '20px' }}>Votre panier est vide.</p>
-              ) : (
-                panier.map((item) => (
-                  <div key={item.id} className="cart-item">
-                    <img src={item.image} alt={item.nom} />
-                    <div className="item-details" style={{ flexGrow: 1 }}>
-                      <h4>{item.nom}</h4>
-                      <p style={{ fontWeight: 'bold', color: 'var(--primary-color)' }}>{item.prix} €</p>
-                      <div className="quantity-controls">
-                        <button onClick={() => diminuerQuantite(item.id)}>-</button>
-                        <span>{item.quantite}</span>
-                        <button onClick={() => ajouterAuPanier(item)}>+</button>
-                      </div>
-                    </div>
-                    <i 
-                      className="fa-solid fa-trash remove-btn" 
-                      onClick={() => supprimerDuPanier(item.id)}
-                      title="Supprimer"
-                    ></i>
+              
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                {/* 👈 استخدام المكون الجديد بدلاً من الكود الطويل */}
+                {produitsFiltres.map((produit) => (
+                  <ProductCard 
+                    key={produit.id} 
+                    produit={produit} 
+                    langue={langue} 
+                    traductions={traductions} 
+                    ajouterAuPanier={ajouterAuPanier} 
+                  />
+                ))}
+                
+                {produitsFiltres.length === 0 && (
+                  <div className="col-span-full py-20 text-center opacity-50">
+                    <i className="fa-solid fa-box-open text-6xl text-gray-400 mb-4"></i>
+                    <p className="text-xl font-bold text-gray-500">{traductions[langue].aucunProduit}</p>
                   </div>
-                ))
-              )}
-            </div>
-            
-            <div className="cart-footer">
-              <h3>Total : <span>{total}</span> €</h3>
-              <button className="btn-checkout" onClick={viderPanier}>
-                Passer la commande
-              </button>
-            </div>
+                )}
+              </div>
+            </main>
+
+            {isCartOpen && (
+              <CartModal 
+                setIsCartOpen={setIsCartOpen} panier={panier} supprimerDuPanier={supprimerDuPanier} 
+                diminuerQuantite={diminuerQuantite} ajouterAuPanier={ajouterAuPanier} total={total} 
+                passerCommande={passerCommande} langue={langue} traductions={traductions}
+              />
+            )}
+
+            <Footer langue={langue} traductions={traductions} />
+
           </div>
-        </div>
-      )}
-
-      {notification && (
-        <div className="toast-notification">
-          {notification}
-        </div>
-      )}
-
-      <footer>
-        <p>&copy; 2026 ZAID SHOP. Tous droits réservés.</p>
-      </footer>
+        } />
+      </Routes>
     </div>
   );
 }

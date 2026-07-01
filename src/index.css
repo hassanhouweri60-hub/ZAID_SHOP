@@ -1,7 +1,12 @@
-/* --- Variables pour un thème harmonieux --- */
+@import "tailwindcss";
+
+/* 🪄 LA MAGIE POUR ACTIVER TON BOUTON MODE SOMBRE (TAILWIND V4) */
+@variant dark (&:where(.dark, .dark *));
+
+/* --- Variables Globales (Conservées pour la page Login/Contact) --- */
 :root {
-    --primary-color: #1e3a8a; /* Bleu profond élégant */
-    --accent-color: #f59e0b; /* Doré pour le côté premium */
+    --primary-color: #1e3a8a;
+    --accent-color: #f59e0b;
     --text-dark: #1f2937;
     --text-light: #6b7280;
     --bg-light: #f3f4f6;
@@ -9,519 +14,71 @@
     --transition: all 0.3s ease;
 }
 
-/* --- Reset de base --- */
 * {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
     font-family: 'Poppins', sans-serif;
 }
 
 body {
-    background-color: var(--bg-light);
-    color: var(--text-dark);
     scroll-behavior: smooth;
-}
-
-/* --- Barre de Navigation --- */
-.navbar {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 20px 5%;
-    background-color: var(--white);
-    box-shadow: 0 4px 6px rgba(0,0,0,0.05);
-    position: sticky;
-    top: 0;
-    z-index: 100;
-}
-
-.logo {
-    font-size: 1.5rem;
-    font-weight: 700;
-    color: var(--primary-color);
-}
-
-.logo span {
-    color: var(--accent-color);
-}
-
-.nav-links {
-    list-style: none;
-    display: flex;
-    gap: 30px;
-}
-
-.nav-links a {
-    text-decoration: none;
-    color: var(--text-dark);
-    font-weight: 600;
-    transition: var(--transition);
-}
-
-.nav-links a:hover {
-    color: var(--primary-color);
-}
-
-.cart-icon {
-    font-size: 1.5rem;
-    cursor: pointer;
-    position: relative;
-    color: var(--primary-color);
-}
-
-#cart-count {
-    position: absolute;
-    top: -10px;
-    right: -10px;
-    background-color: var(--accent-color);
-    color: var(--white);
-    font-size: 0.8rem;
-    font-weight: 700;
-    padding: 2px 6px;
-    border-radius: 50%;
-}
-
-/* --- Section Héro (Bannière) --- */
-.hero {
-    height: 70vh;
-    background: linear-gradient(rgba(30, 58, 138, 0.8), rgba(30, 58, 138, 0.8)), url('https://images.unsplash.com/photo-1497366216548-37526070297c?auto=format&fit=crop&w=1600&q=80') center/cover;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    text-align: center;
-    color: var(--white);
-    padding: 0 20px;
-}
-
-.hero-content h1 {
-    font-size: 3.5rem;
-    margin-bottom: 20px;
-    letter-spacing: 2px;
-}
-
-.hero-content p {
-    font-size: 1.2rem;
-    margin-bottom: 30px;
-}
-
-.btn-primary {
-    background-color: var(--accent-color);
-    color: var(--white);
-    padding: 15px 30px;
-    text-decoration: none;
-    font-weight: 700;
-    border-radius: 30px;
-    transition: var(--transition);
-}
-
-.btn-primary:hover {
-    background-color: #d97706;
-    transform: translateY(-3px);
-}
-
-/* --- Grille de Produits --- */
-.shop-section {
-    padding: 80px 5%;
-}
-
-.section-title {
-    text-align: center;
-    margin-bottom: 50px;
-}
-
-.section-title h2 {
-    font-size: 2.5rem;
-    color: var(--primary-color);
-}
-
-.underline {
-    height: 4px;
-    width: 80px;
-    background-color: var(--accent-color);
-    margin: 10px auto;
-    border-radius: 2px;
-}
-
-.product-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-    gap: 30px;
-}
-
-.product-card {
-    background-color: var(--white);
-    border-radius: 15px;
-    overflow: hidden;
-    box-shadow: 0 10px 20px rgba(0,0,0,0.05);
-    transition: var(--transition);
-    display: flex;
-    flex-direction: column;
-}
-
-.product-card:hover {
-    transform: translateY(-10px);
-    box-shadow: 0 15px 30px rgba(0,0,0,0.1);
-}
-
-.product-img {
-    width: 100%;
-    height: 250px;
-    object-fit: cover;
-}
-
-.product-info {
-    padding: 20px;
-    text-align: center;
-    flex-grow: 1;
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
-}
-
-.product-info h3 {
-    font-size: 1.2rem;
-    margin-bottom: 10px;
-}
-
-.price {
-    font-size: 1.5rem;
-    color: var(--primary-color);
-    font-weight: 700;
-    margin-bottom: 15px;
-}
-
-.btn-add {
-    background-color: var(--primary-color);
-    color: var(--white);
-    border: none;
-    padding: 10px;
-    border-radius: 8px;
-    cursor: pointer;
-    font-weight: 600;
-    transition: var(--transition);
-}
-
-.btn-add:hover {
-    background-color: var(--accent-color);
-}
-
-/* --- Panier Latéral (Modal) Corrigé pour React --- */
-.cart-overlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background-color: rgba(0,0,0,0.5); /* Fond sombre */
-    z-index: 999;
-}
-
-.cart-modal {
-    position: fixed;
-    top: 0;
-    right: 0; /* Avant c'était -100%, c'est pour ça qu'il fuyait hors de l'écran ! */
-    width: 400px;
-    height: 100%;
-    background-color: var(--white);
-    box-shadow: -5px 0 15px rgba(0,0,0,0.1);
-    display: flex;
-    flex-direction: column;
-    z-index: 1000;
-}
-
-.cart-header {
-    padding: 20px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    border-bottom: 1px solid #ddd;
-    background-color: var(--primary-color);
-    color: var(--white);
-}
-
-#close-cart {
-    background: none;
-    border: none;
-    color: var(--white);
-    font-size: 1.5rem;
-    cursor: pointer;
-}
-
-.cart-items {
-    padding: 20px;
-    flex-grow: 1;
-    overflow-y: auto;
-}
-
-.cart-item {
-    display: flex;
-    align-items: center;
-    gap: 15px;
-    margin-bottom: 20px;
-    border-bottom: 1px solid #eee;
-    padding-bottom: 15px;
-}
-
-.cart-item img {
-    width: 70px;
-    height: 70px;
-    border-radius: 8px;
-    object-fit: cover;
-}
-
-.item-details h4 {
-    font-size: 1rem;
-}
-
-.remove-btn {
-    color: red;
-    cursor: pointer;
-    font-size: 0.9rem;
-    margin-top: 5px;
-    display: inline-block;
-}
-
-.cart-footer {
-    padding: 20px;
-    border-top: 1px solid #ddd;
-    text-align: center;
-}
-
-.btn-checkout {
-    width: 100%;
-    background-color: var(--accent-color);
-    color: white;
-    border: none;
-    padding: 15px;
-    margin-top: 15px;
-    font-size: 1.1rem;
-    font-weight: 700;
-    border-radius: 8px;
-    cursor: pointer;
-}
-
-footer {
-    text-align: center;
-    padding: 20px;
-    background-color: var(--primary-color);
-    color: var(--white);
-    margin-top: 50px;
-}
-
-/* Responsive pour les téléphones */
-@media (max-width: 768px) {
-    /* Au lieu de cacher le menu, on l'affiche proprement en dessous du logo */
-    .navbar {
-        flex-direction: column;
-        gap: 15px;
-        padding: 15px 5%;
-    }
-
-    .nav-links { 
-        display: flex; /* On l'affiche ! */
-        gap: 20px;
-        font-size: 0.9rem;
-    }
-
-    .hero-content h1 { font-size: 2.5rem; }
-    .cart-modal { width: 100%; }
-}
-/* --- Mode Sombre --- */
-body.dark-mode {
-    --bg-light: #111827;
-    --white: #1f2937;
-    --text-dark: #f3f4f6;
-    --text-light: #9ca3af;
-    --primary-color: #3b82f6; /* Un bleu un peu plus clair pour le contraste */
-}
-
-/* Style pour les contrôles de quantité du panier */
-.quantity-controls {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    margin-top: 10px;
-}
-
-.quantity-controls button {
-    background-color: var(--primary-color);
-    color: white;
-    border: none;
-    width: 25px;
-    height: 25px;
-    border-radius: 5px;
-    cursor: pointer;
-    font-weight: bold;
-}
-/* --- Barre de recherche --- */
-.search-container {
-    max-width: 500px;
-    margin: 0 auto 40px auto;
-    position: relative;
-}
-
-.search-box {
-    display: flex;
-    align-items: center;
-    background-color: var(--white);
-    padding: 10px 20px;
-    border-radius: 30px;
-    box-shadow: 0 4px 10px rgba(0,0,0,0.05);
-}
-
-.search-box input {
-    width: 100%;
-    border: none;
-    outline: none;
-    background: transparent;
-    font-size: 1rem;
-    color: var(--text-dark);
-}
-
-.search-box i {
-    color: var(--primary-color);
-    font-size: 1.2rem;
-}
-
-/* Boîte de suggestions */
-.suggestions-box {
-    position: absolute;
-    top: 110%;
-    left: 0;
-    width: 100%;
-    background-color: var(--white);
-    border-radius: 10px;
-    box-shadow: 0 10px 20px rgba(0,0,0,0.1);
-    z-index: 50;
-    max-height: 200px;
-    overflow-y: auto;
-    display: none; /* Caché par défaut */
-}
-
-.suggestion-item {
-    padding: 12px 20px;
-    cursor: pointer;
-    transition: var(--transition);
-    color: var(--text-dark);
-    border-bottom: 1px solid #f3f4f6;
-}
-
-.suggestion-item:last-child {
-    border-bottom: none;
-}
-
-.suggestion-item:hover {
     background-color: var(--bg-light);
-    color: var(--primary-color);
-}
-/* --- LE STYLE DES BOUTONS DU PANIER --- */
-.add-to-cart {
-    background-color: #ffa600; /* Le beau bleu de ton site */
-    color: white;
-    border: none;
-    padding: 12px 20px;
-    font-size: 1rem;
-    font-family: 'Poppins', sans-serif;
-    font-weight: 600;
-    cursor: pointer;
-    transition: background-color 0.3s ease, transform 0.1s ease;
-    width: 90%;
-    margin: 15px auto; /* Centre le bouton avec un peu d'espace */
-    border-radius: 8px; /* Arrondi les bords */
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    gap: 10px; /* Espace entre le texte et l'icône */
+    transition: background-color 0.3s ease;
 }
 
-.add-to-cart:hover {
-    background-color: #152754; /* Bleu plus foncé quand on passe la souris */
-    transform: scale(1.02); /* Petit effet de zoom stylé */
-}
-
-/* On s'assure que la carte produit aligne bien les éléments */
-.product-card {
-    display: flex;
-    flex-direction: column;
-    text-align: center;
-    background: white;
-    border-radius: 10px;
-    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-    overflow: hidden;
-}
-
-.product-card h3, .product-card p {
-    margin: 5px 0;
-}
-/* --- LE MODE SOMBRE --- */
+/* Force la couleur de fond du body quand le mode sombre est activé */
 body.dark {
-    background-color: #121212;
-    color: #ffffff;
+    background-color: #111827; /* Équivalent au bg-gray-900 de Tailwind */
 }
 
-body.dark .navbar {
-    background-color: #1e1e1e;
-    box-shadow: 0 2px 10px rgba(255,255,255,0.1);
-}
-
-body.dark .nav-links a, 
-body.dark .logo {
-    color: #ffffff;
-}
-
-body.dark .product-card, 
-body.dark .cart-modal {
-    background-color: #242424;
-    color: #ffffff;
-    box-shadow: 0 4px 8px rgba(255,255,255,0.1);
-}
-
-body.dark input {
-    background-color: #152754;
-    color: #fff;
-    border: 1px solid #152754;
-}
-body.dark .search-box {
-    background-color: #152754; /* Rend le fond de la grosse boîte sombre */
-    border: 1px solid #152754;
-}
-
-body.dark .search-box i {
-    color: #ffffff; /* Met la petite loupe en blanc */
-}
 /* --- TOAST NOTIFICATION STYLÉE --- */
 .toast-notification {
     position: fixed;
     bottom: 20px;
     left: 50%;
-    transform: translateX(-50%); /* Centre parfaitement le message horizontalement */
-    background: linear-gradient(135deg, var(--primary-color), #2563eb); /* Joli dégradé bleu */
+    transform: translateX(-50%);
+    background: linear-gradient(135deg, var(--primary-color), #2563eb);
     color: white;
     padding: 15px 30px;
     border-radius: 30px;
     box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
     font-weight: 600;
     font-size: 1rem;
-    z-index: 99999; /* Passe au-dessus de absolument tout */
-    animation: slideUp 0.4s ease-out; /* Petite animation d'apparition */
+    z-index: 99999; 
+    animation: slideUp 0.4s ease-out; 
     display: flex;
     align-items: center;
     gap: 10px;
 }
 
-/* Animation pour faire monter le message depuis le bas */
 @keyframes slideUp {
-    from {
-        bottom: -50px;
-        opacity: 0;
-    }
-    to {
-        bottom: 20px;
-        opacity: 1;
-    }
+    from { bottom: -50px; opacity: 0; }
+    to { bottom: 20px; opacity: 1; }
 }
-/* --- PAGE DE CONNEXION --- */
+
+/* --- ANIMATION DES EMOJIS FLOTTANTS --- */
+.floating-emoji {
+    position: absolute;
+    font-size: 4rem;
+    opacity: 0.25; 
+    z-index: 0;
+    user-select: none; 
+    animation: float 6s ease-in-out infinite;
+}
+
+.emoji-1 { top: 15%; left: 10%; animation-delay: 0s; }
+.emoji-2 { top: 80%; left: 15%; animation-delay: 0s; }
+.emoji-3 { top: 20%; right: 10%; animation-delay: 0s; }
+.emoji-4 { top: 73%; right: 7%; animation-delay: 0s; }
+.emoji-5 { top: 50%; left: 25%; animation-delay: 0s; }
+.emoji-6 { top: 55%; left: 70%; animation-delay: 0s; }
+.emoji-7 { top: 50%; right: 90%; animation-delay: 0s; }
+.emoji-8 { top: 15%; right: 28%; animation-delay: 0s; }
+
+@keyframes float {
+    0%, 100% { transform: translateY(0) rotate(0deg); }
+    50% { transform: translateY(-20px) rotate(10deg); }
+}
+
+/* --- CLASSES POUR LA PAGE LOGIN --- */
 .login-page {
     min-height: 100vh;
     display: flex;
@@ -529,8 +86,8 @@ body.dark .search-box i {
     align-items: center;
     background-color: var(--bg-light);
     padding: 20px;
-    position: relative; /* Nécessaire pour les emojis absolus */
-    overflow: hidden; /* Empêche les emojis de créer des barres de défilement */
+    position: relative; 
+    overflow: hidden; 
 }
 
 .login-box {
@@ -542,14 +99,14 @@ body.dark .search-box i {
     max-width: 400px;
     text-align: center;
     position: relative;
-    z-index: 10; /* Garde la boîte blanche au-dessus des emojis */
+    z-index: 10; 
 }
 
 .login-form {
     display: flex;
     flex-direction: column;
     gap: 15px;
-    width: 100%; /* S'assure que le formulaire ne déborde pas */
+    width: 100%; 
 }
 
 .login-form input {
@@ -558,41 +115,14 @@ body.dark .search-box i {
     border-radius: 8px;
     font-size: 1rem;
     outline: none;
-    width: 100%; /* Force les inputs à rester dans la boîte */
-    box-sizing: border-box; /* C'EST LA CORRECTION MAGIQUE ICI 🪄 */
+    width: 100%; 
+    box-sizing: border-box; 
 }
 
 .login-form input:focus {
     border-color: var(--primary-color);
 }
 
-/* --- ANIMATION DES EMOJIS FLOTTANTS --- */
-.floating-emoji {
-    position: absolute;
-    font-size: 4rem;
-    opacity: 0.25; /* Très transparent pour ne pas gêner la lecture */
-    z-index: 0;
-    user-select: none; /* Empêche de les sélectionner avec la souris */
-    animation: float 6s ease-in-out infinite;
-}
-
-/* Positionnement de chaque emoji */
-.emoji-1 { top: 15%; left: 10%; animation-delay: 0s; }
-.emoji-2 { top: 80%; left: 15%; animation-delay: 0s; }
-.emoji-3 { top: 20%; right: 10%; animation-delay: 0s; }
-.emoji-4 { top: 73%; right: 7%; animation-delay: 0s; }
-.emoji-5 { top: 50%; left: 25%; animation-delay: 0s; }
-.emoji-6 { top: 55%; left: 70%; animation-delay: 0s; }
-.emoji-7 { top: 50%; right: 90%; animation-delay: 0s; }
-.emoji-8 { top: 15%; right: 28%; animation-delay: 0s; }
-
-/* L'effet de lévitation */
-@keyframes float {
-    0%, 100% { transform: translateY(0) rotate(0deg); }
-    50% { transform: translateY(-20px) rotate(10deg); }
-}
-
-/* Reste du style des boutons */
 .btn-login {
     background-color: var(--primary-color);
     color: white;
